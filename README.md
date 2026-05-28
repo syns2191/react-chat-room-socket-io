@@ -1,24 +1,74 @@
- - date of  submission 1 oct 2023
- - instruction tu run this project
-	 - using docker
-		 - `docker-compose up --build --no-recreate -d`
-		 - `docker-compose ps`
-		 - `docker exec -it vite_docker sh`
-		 - `npm i`
-		 - `npm run dev`
-		 - frontend will running in port 8000
- - how much time that i use to build this project 16 hours
- - Assumptions made
- - Shortcuts/Compromises made ? yes i did, like create schema and query and validatiation data input 
- - Assume your application will go into production...
-	 - What would be your approach to ensuring the application is ready for production
-		(testing)? security and peformance
-	
-	 - How would you ensure a smooth user experience as 1000’s of users start using your app simultaneously?  doing stress test and performance test
-	 - What key steps would you take to ensure application security? in real world i will check the sql injection if we use sql and pick secure cloud server.
-	 - What did you not include in your solution that you want us to know about ? Were you short on time and not able to include something that you want us to know about? 
-		 - more security
-		 - more complex handling condition
-		 - more connection validation
-		 - more connection establish
-	 - this technical challenge is interesting to me. i have learn more about websocket from this test
+# Chat Room — Frontend
+
+A real-time chat application built with React and WebSocket.
+
+## Preview
+
+![Chat Room Preview](public/chat-site.png)
+
+## Tech Stack
+
+- **React 18** + React Router DOM v6
+- **Material-UI (MUI) v5** for UI components and theming
+- **WebSocket** via `react-use-websocket` for real-time messaging
+- **Axios** for REST API calls
+- **Vite** as the build tool and dev server
+- **date-fns** for timestamp formatting
+
+## Features
+
+- Join a chat room with a username and room ID
+- Real-time messaging over WebSocket
+- Message history loaded on join
+- Left/right message bubbles distinguishing other users from yourself
+- Protected routes — requires authentication to access the chat
+
+## Getting Started
+
+### With Docker
+
+```bash
+docker-compose up --build --no-recreate -d
+docker-compose ps
+docker exec -it vite_docker sh
+yarn
+yarn dev
+```
+
+### Without Docker
+
+```bash
+yarn
+yarn dev
+```
+
+The app runs on **http://localhost:8000**.
+
+> Make sure the backend is running on `http://localhost:3000` before starting.
+
+## Project Structure
+
+```
+src/
+├── components/
+│   ├── Chat.jsx          # Main chat view with WebSocket connection
+│   ├── ChatInput.jsx     # Message input with Enter-to-send
+│   ├── Message.jsx       # Left/right message bubble components
+│   ├── Login.jsx         # Username + room ID login form
+│   └── ProtectedRoute.jsx
+├── context/
+│   └── AuthContext.jsx   # Auth state via React Context + localStorage
+├── services/
+│   └── api.js            # Axios instance (base: http://localhost:3000/api/)
+└── App.jsx               # Theme config and route setup
+```
+
+## Environment
+
+No `.env` file required for local development. The backend URL is configured in `src/services/api.js` and the WebSocket URL in `src/components/Chat.jsx`.
+
+| Variable | Default |
+|----------|---------|
+| API base URL | `http://localhost:3000/api/` |
+| WebSocket URL | `ws://localhost:3000/chats` |
+| Dev server port | `8000` |
