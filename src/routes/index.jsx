@@ -11,44 +11,27 @@ const Router = () => {
   const auth = useAuth();
   const token = auth && auth.token;
 
-  // Define public routes accessible to all users
-  const routesForPublic = [
-  ];
-
-  // Define routes accessible only to authenticated users
-  const routesForAuthenticatedOnly = [
+  const router = React.useMemo(() => createBrowserRouter([
+    {
+      path: "/login",
+      element: <Login />,
+    },
     {
       path: "/",
-      element: <ProtectedRoute />, // Wrap the component in ProtectedRoute
+      element: <ProtectedRoute />,
       children: [
         {
           path: "",
           element: <Chat />,
         },
         {
-          path: "/chat",
+          path: "chat",
           element: <Chat />,
-        }
+        },
       ],
     },
-  ];
+  ]), [token]);
 
-  // Define routes accessible only to non-authenticated users
-  const routesForNotAuthenticatedOnly = [
-    {
-      path: "/login",
-      element: <Login/>,
-    },
-  ];
-
-  // Combine and conditionally include routes based on authentication status
-  const router = createBrowserRouter([
-    ...routesForPublic,
-    ...(!token ? routesForNotAuthenticatedOnly : []),
-    ...routesForAuthenticatedOnly,
-  ]);
-
-  // Provide the router configuration using RouterProvider
   return <RouterProvider router={router} />;
 };
 

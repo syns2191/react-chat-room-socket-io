@@ -1,6 +1,6 @@
 import api from '../utils/api'
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-
+import { socket } from '../socket';
 const AuthContext = createContext();
 
 const AuthProvider = ({ children }) => {
@@ -9,16 +9,25 @@ const AuthProvider = ({ children }) => {
 
   // Function to set the authentication token
   const setToken = (newToken) => {
+    localStorage.setItem('token', newToken);
     setToken_(newToken);
   };
 
   useEffect(() => {
     if (token) {
-      // api.defaults.headers.common["Authorization"] = "Bearer " + token;
-      localStorage.setItem("token", token);
+      const authParse = JSON.parse(token);
+      api.defaults.headers.common["Authorization"] = "Bearer " + authParse.token;
+      socket.auth = {
+        token: authParse.token
+      }
+      socket.connect();
     } else {
-      // delete api.defaults.headers.common["Authorization"];
+      delete api.defaults.headers.common["Authorization"];
       localStorage.removeItem("token");
+      socket.disconnect();
+    }
+    return () => {
+      socket.disconnect();
     }
   }, [token]);
 
