@@ -1,6 +1,8 @@
 import axios from "axios";
+import env from "../config/env";
+
 const api = axios.create({
-  baseURL: "http://localhost:3000/api/", // Replace with your API base URL
+  baseURL: env.API_BASE_URL,
 });
 // const navigate = useNavigate();
 
