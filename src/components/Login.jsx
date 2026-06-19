@@ -74,7 +74,7 @@ export default function SignIn() {
           <div className="w-12 h-12 rounded-2xl bg-sky-600 flex items-center justify-center mb-3 shadow-lg shadow-sky-200">
             <ChatBubbleOvalLeftIcon className="w-6 h-6 text-white" />
           </div>
-          <h1 className="text-xl font-bold text-gray-800">ChatRoom</h1>
+          <h1 className="text-xl font-bold text-gray-800">R-CHAt</h1>
           <p className="text-sm text-gray-400 mt-1">
             {isLogin ? 'Welcome back' : 'Create your account'}
           </p>

@@ -1,27 +1,33 @@
-# Chat Room — Frontend
+# R-CHAt — Frontend
 
-A real-time chat application built with React and WebSocket.
+A real-time private chat application with a friends system, built with React and Socket.IO.
 
-## Preview
+## Live Preview
 
-![Chat Room Preview](public/chat-site.png)
+**[chat.sutralian.dev](https://chat.sutralian.dev)**
+
+## Screenshot
+
+![R-CHAt UI](public/chat-site.png)
 
 ## Tech Stack
 
-- **React 18** + React Router DOM v6
-- **Material-UI (MUI) v5** for UI components and theming
-- **WebSocket** via `react-use-websocket` for real-time messaging
+- **React 19** + React Router DOM v6
+- **Tailwind CSS v4** for styling (via `@tailwindcss/vite`)
+- **Socket.IO Client v4** for real-time messaging and notifications
 - **Axios** for REST API calls
-- **Vite** as the build tool and dev server
+- **Heroicons** for icons
 - **date-fns** for timestamp formatting
+- **Vite** as the build tool and dev server
 
 ## Features
 
-- Join a chat room with a username and room ID
-- Real-time messaging over WebSocket
-- Message history loaded on join
-- Left/right message bubbles distinguishing other users from yourself
-- Protected routes — requires authentication to access the chat
+- Real-time private messaging over Socket.IO
+- Friends system — search by email, send/accept/reject friend requests
+- Conversation list with unread message badges
+- Responsive layout — works on mobile and desktop
+- Protected routes with JWT auth stored in localStorage
+- Online/offline connection status indicator
 
 ## Getting Started
 
@@ -29,10 +35,8 @@ A real-time chat application built with React and WebSocket.
 
 ```bash
 docker-compose up --build --no-recreate -d
-docker-compose ps
 docker exec -it vite_docker sh
-yarn
-yarn dev
+yarn && yarn dev
 ```
 
 ### Without Docker
@@ -42,33 +46,41 @@ yarn
 yarn dev
 ```
 
-The app runs on **http://localhost:8000**.
+The app runs on **http://localhost:5173** by default.
 
-> Make sure the backend is running on `http://localhost:3000` before starting.
+> Make sure the backend API and Socket.IO server are running before starting.
+
+## Environment Variables
+
+Create a `.env` file at the project root:
+
+```env
+VITE_API_BASE_URL=http://localhost:3000/api
+VITE_SOCKET_URL=http://localhost:3000
+```
+
+| Variable | Description |
+|---|---|
+| `VITE_API_BASE_URL` | Base URL for the REST API |
+| `VITE_SOCKET_URL` | Socket.IO server URL |
 
 ## Project Structure
 
 ```
 src/
 ├── components/
-│   ├── Chat.jsx          # Main chat view with WebSocket connection
-│   ├── ChatInput.jsx     # Message input with Enter-to-send
-│   ├── Message.jsx       # Left/right message bubble components
-│   ├── Login.jsx         # Username + room ID login form
-│   └── ProtectedRoute.jsx
-├── context/
-│   └── AuthContext.jsx   # Auth state via React Context + localStorage
-├── services/
-│   └── api.js            # Axios instance (base: http://localhost:3000/api/)
-└── App.jsx               # Theme config and route setup
+│   ├── Chat.jsx        # Main chat UI — conversations, messaging, friends panel
+│   ├── Login.jsx       # Sign in / sign up page
+│   ├── Alert.jsx       # Error/success alert component
+│   ├── ChatInput.jsx   # Legacy message input component
+│   └── Message.jsx     # Legacy message bubble components
+├── provider/
+│   ├── authProvider.jsx    # JWT auth context + localStorage
+│   └── socketProvider.jsx  # Socket.IO connection context
+├── config/
+│   └── env.js          # VITE_ env variable exports
+├── utils/
+│   └── api.js          # Axios instance with auth header injection
+├── routes/             # React Router route definitions
+└── App.jsx             # Root component — providers + router
 ```
-
-## Environment
-
-No `.env` file required for local development. The backend URL is configured in `src/services/api.js` and the WebSocket URL in `src/components/Chat.jsx`.
-
-| Variable | Default |
-|----------|---------|
-| API base URL | `http://localhost:3000/api/` |
-| WebSocket URL | `ws://localhost:3000/chats` |
-| Dev server port | `8000` |
