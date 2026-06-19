@@ -1,256 +1,142 @@
 import * as React from 'react';
-
-import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../provider/authProvider';
 import api from '../utils/api';
 import { useEffect } from 'react';
 import { Alert } from './Alert';
-
-
-// TODO remove, this demo shouldn't need to reset the theme.
-const defaultTheme = createTheme({
-  components: {
-    MuiCssBaseline: {
-      styleOverrides: {
-        body: {
-          justifyContent: 'center'
-        }
-      }
-    }
-  }
-});
+import ChatBubbleOvalLeftIcon from '@heroicons/react/24/solid/ChatBubbleOvalLeftIcon';
 
 export default function SignIn() {
   const auth = useAuth();
   const navigate = useNavigate();
-  const [errors, setErrors] = React.useState(false);
+  const [errors, setErrors] = React.useState(null);
   const [authState, setAuthState] = React.useState('login');
-  const [inputValidated, setInputValidated] = React.useState({
-    email: false,
-    password: false
-  });
-  const [isTransitioning, setIsTransitioning] = React.useState(false);
-  const [registerSuccess, setRegisterSuccess] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
+
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (token) {
-      navigate("/");
-    }
-  }, [])
-
-  const switchAuth = (state) => {
-    setIsTransitioning(true);
-    setTimeout(() => {
-      setAuthState(state);
-      setIsTransitioning(false);
-    }, 700); // match your duration
-  };
+    if (token) navigate("/");
+  }, []);
 
   const login = async (data) => {
-    try {
-      const dataUser = {
-        email: data.get('email'),
-        password: data.get('password'),
-      }
-
-      setInputValidated({
-        email: !dataUser.email,
-        password: !dataUser.password
-      });
-
-      if (!dataUser.email || !dataUser.password) {
-        setErrors({ message: 'please fill your login information' });
-        return;
-      }
-      const result = await api.post('/auth/login', {
-        email: dataUser.email,
-        password: dataUser.password
-      })
-      if (result && result.data && result.data.token) {
-        auth.setToken(JSON.stringify({
-          userId: result.data.id,
-          token: result.data.token,
-        }));
-        navigate("/", { replace: true });
-      }
-    } catch (error) {
-      if (error && error.response && error.response.data && error.response.data.message) {
-        setErrors({ message: error.response.data.message });
-      } else {
-        setErrors({ message: error.message });
-      }
+    const dataUser = { email: data.get('email'), password: data.get('password') };
+    if (!dataUser.email || !dataUser.password) {
+      setErrors({ message: 'Please fill in all fields' });
+      return;
     }
-  }
+    const result = await api.post('/auth/login', dataUser);
+    if (result?.data?.token) {
+      auth.setToken(JSON.stringify({ userId: result.data.id, token: result.data.token }));
+      navigate("/", { replace: true });
+    }
+  };
 
   const register = async (data) => {
-    try {
-      const dataUser = {
-        email: data.get('email'),
-        password: data.get('password'),
-        name: data.get('name')
-      }
-
-      setInputValidated({
-        email: !dataUser.email,
-        password: !dataUser.password,
-        name: !dataUser.name
-      });
-
-      if (!dataUser.email || !dataUser.password || !dataUser.name) {
-        setErrors({ message: 'please fill your registration information' });
-        return;
-      }
-
-      if (dataUser.password !== data.get('password_compared')) {
-        setErrors({message: 'Retyped password not match'});
-        return;
-      }
-      const result = await api.post('/auth/register', {
-        email: dataUser.email,
-        password: dataUser.password,
-        name: dataUser.name
-      })
-      if (result && result.data && result.data.token) {
-        setAuthState('login');
-      }
-    } catch (error) {
-      if (error && error.response && error.response.data && error.response.data.message) {
-        setErrors({ message: error.response.data.message });
-      } else {
-        setErrors({ message: error.message });
-      }
+    const dataUser = { email: data.get('email'), password: data.get('password'), name: data.get('name') };
+    if (!dataUser.email || !dataUser.password || !dataUser.name) {
+      setErrors({ message: 'Please fill in all fields' });
+      return;
     }
-  }
+    if (dataUser.password !== data.get('password_compared')) {
+      setErrors({ message: 'Passwords do not match' });
+      return;
+    }
+    const result = await api.post('/auth/register', dataUser);
+    if (result?.data) {
+      setAuthState('login');
+      setErrors(null);
+    }
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setErrors(null);
-    const data = new FormData(event.currentTarget);
-    if (authState === 'login') {
-      await login(data);
-      return;
+    setLoading(true);
+    try {
+      const data = new FormData(event.currentTarget);
+      if (authState === 'login') await login(data);
+      else await register(data);
+    } catch (error) {
+      setErrors({ message: error?.response?.data?.message || error.message });
+    } finally {
+      setLoading(false);
     }
-    await register(data);
   };
 
+  const inputClass = "w-full bg-white border border-gray-200 text-gray-800 text-sm rounded-xl px-4 py-3 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition-all placeholder:text-gray-400";
+  const isLogin = authState === 'login';
+
   return (
-    <div className="flex min-h-[100vh] w-full items-center justify-center">
-      <div className="flex md:hidden w-full h-screen  flex-col bg-slate-100">
-        <div class={`absolute w-full overflow-hidden transition-all duration-700 ${isTransitioning ? 'h-screen' : 'h-[200px]'}`}>
-          <div class={`absolute inset-0 ${isTransitioning ? 'bg-sky-900' : 'bg-[linear-gradient(135deg,_theme(colors.sky.700)_0%,_theme(colors.sky.900)_100%)] [clip-path:polygon(0_0,100%_0,100%_70%,0_100%)]'}`}></div>
-          <div class="relative z-10 p-7 pt-8">
-            <h1 class="text-2xl font-semibold leading-[1.24] text-white">
-              {authState === 'register' && 'Create'}
-              {authState === 'login' && 'Welcome'}
-            </h1>
-            <h1 class="text-2xl font-semibold leading-[1.24] text-white">
-              {authState === 'register' && 'Account'}
-              {authState === 'login' && 'Back'}
-            </h1>
-            <p class="text-[11px] font-medium text-white mt-2">Please {`${authState === 'login' ? 'sign-in' : 'sign-up'}`} to continue!</p>
+    <div className="flex min-h-screen w-full items-center justify-center bg-gradient-to-br from-sky-50 to-slate-100 px-4">
+      <div className="w-full max-w-sm">
+        {/* Logo / brand */}
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-12 h-12 rounded-2xl bg-sky-600 flex items-center justify-center mb-3 shadow-lg shadow-sky-200">
+            <ChatBubbleOvalLeftIcon className="w-6 h-6 text-white" />
           </div>
+          <h1 className="text-xl font-bold text-gray-800">ChatRoom</h1>
+          <p className="text-sm text-gray-400 mt-1">
+            {isLogin ? 'Welcome back' : 'Create your account'}
+          </p>
         </div>
-        <form className="flex flex-col w-full px-6 py-6 mt-50" onSubmit={handleSubmit}>
-          {authState === 'login' ? (
-            <>
-              {errors && <Alert type="error" message={errors?.message} />}
-              <input name="email" type="email" placeholder="Email" className="bg-gray-50 border border-sky-900 text-gray-900 text-sm rounded-lg block w-full p-2.5 mb-4" />
-              <input name="password" type="password" placeholder="Password" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 mb-4" />
-              <button type="submit" className="border text-sm border-sky-900 px-2 py-2 rounded-lg text-gray-900">Login</button>
-            </>
-          ) : (
-            <>
-              {errors && <Alert type="error" message={errors?.message} />}
-              <input name="email" type="email" placeholder="Email" className="bg-gray-50 border border-sky-900 text-gray-900 text-sm rounded-lg block w-full p-2.5 mb-4" />
-              <input name="name" type="text" placeholder="Name" className="bg-gray-50 border border-sky-900 text-gray-900 text-sm rounded-lg block w-full p-2.5 mb-4" />
-              <input name="password" type="password" placeholder="Password" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 mb-4" />
-              <input name="password_compared" type="password" placeholder="Re enter password" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 mb-4" />
-              <button type="submit" className="border text-sm border-sky-600 px-2 py-2 rounded-lg text-gray-700">Register</button>
-            </>
-          )}
-        </form>
-        <p className="text-center text-sm text-gray-500 mt-6">
-          {authState === 'login'
-            ? <><span>No account? </span><button className="text-sky-900 underline" onClick={() => { setErrors(null); switchAuth('register'); }}>Register</button></>
-            : <><span>Have an account? </span><button className="text-sky-900 underline" onClick={() => { setErrors(null); switchAuth('login'); }}>Login</button></>
-          }
-        </p>
-      </div>
-      <div className="md:flex relative hidden md:w-2/3 w-full flex-row">
-        <div className={`flex md:w-1/2 bg-slate-100  min-h-120 items-center justify-center px-4 shadow-lg rounded-l-2xl transition-all duration-700`}>
-          {authState === 'login' && (
-            <form className="flex flex-col w-5/6" onSubmit={handleSubmit}>
-              <div className="flex flex-col items-center justify-center px-4 min-h-80">
-                <span className="text-gray-900 text-sm mb-4">Login to your account !!!</span>
-                {errors && <Alert type="error" message={errors?.message} />}
-                <input
-                  name="email"
-                  type="email"
-                  placeholder="Email"
-                  className="bg-gray-50 w-full border border-sky-900 text-gray-900 text-sm rounded-lg focus:ring-sky-950 focus:border-sky-950 block w-full p-2.5 mb-4"
-                />
-                <input
-                  name="password"
-                  type="password"
-                  placeholder="Password"
-                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-sky-950 focus:border-sky-950 block w-full p-2.5 mb-4"
-                />
-                <div className="flex w-full justify-end px-2 py-2">
-                  <button type="submit" className="border-1 text-sm border-sky-900 hover:border-sky-500 hover: border-sky-500 px-2 py-2 min-w-28 rounded-lg hover:cursor-pointer text-gray-900">Login</button>
-                </div>
-              </div>
-            </form>
-          )}
-        </div>
-        <div className={`absolute top-0 h-120 bg-sky-900 md:w-1/2 rounded-2xl shadow-lg z-10 transition-transform duration-700 ${authState === 'login' ? 'translate-x-full' : 'translate-x-0'}`}>
-          <div className="flex h-full items-center justify-center">
-            {authState === 'login' ? (
-              <button className="text-sm border border-teal-500 w-32 px-2 py-2 text-gray-100 rounded-lg transition-all duration-700" onClick={() => setAuthState('register')}>
-                Register
-              </button>
-            ) : (
-              <button className="text-sm border border-teal-500 w-32 px-2 py-2 text-gray-100 rounded-lg transition-all duration-700" onClick={() => setAuthState('login')}>
-                Login
-              </button>
+
+        {/* Card */}
+        <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/60 px-6 py-8">
+          {errors && <div className="mb-4"><Alert type="error" message={errors?.message} /></div>}
+
+          <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+            {!isLogin && (
+              <input
+                name="name"
+                type="text"
+                placeholder="Full name"
+                className={inputClass}
+                autoComplete="name"
+              />
             )}
-          </div>
-        </div>
-        <div className={`flex bg-slate-100 w-1/2 items-center justify-center min-h-120 rounded-r-2xl shadow-lg transition-all duration-700`}>
-          {authState === 'register' && (
-            <form className="flex flex-col w-5/6 transition-all duration-700" onSubmit={handleSubmit}>
-              <div className="flex flex-col items-center justify-center px-4 min-h-80">
-                <span className="text-gray-700 text-sm mb-4">Register your account</span>
-                {errors && <Alert type="error" message={errors?.message} />}
-                <input
-                  name="email"
-                  type="email"
-                  placeholder="Email"
-                  className="bg-gray-50 w-full border border-sky-900 text-gray-900 text-sm rounded-lg focus:ring-sky-950 focus:border-sky-950 block w-full p-2.5 mb-4"
-                />
-                <input
-                  name="name"
-                  type="text"
-                  placeholder="Name"
-                  className="bg-gray-50  border border-sky-900 text-gray-900 text-sm rounded-lg focus:ring-sky-950 focus:border-sky-950 block w-full p-2.5 mb-4"
-                />
-                <input
-                  name="password"
-                  type="password"
-                  placeholder="Password"
-                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-sky-950 focus:border-sky-950 block w-full p-2.5 mb-4"
-                />
-                <input
-                  name="password_compared"
-                  type="password"
-                  placeholder="Re enter password"
-                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-sky-950 focus:border-sky-950 block w-full p-2.5 mb-4"
-                />
-                <div className="flex w-full justify-end px-2 py-2">
-                  <button type="submit" className="border-1 text-sm border-sky-600 hover:border-sky-900 hover: border-sky-500 px-2 py-2 min-w-28 rounded-lg hover:cursor-pointer text-gray-700">Register</button>
-                </div>
-              </div>
-            </form>
-          )}
+            <input
+              name="email"
+              type="email"
+              placeholder="Email address"
+              className={inputClass}
+              autoComplete="email"
+            />
+            <input
+              name="password"
+              type="password"
+              placeholder="Password"
+              className={inputClass}
+              autoComplete={isLogin ? "current-password" : "new-password"}
+            />
+            {!isLogin && (
+              <input
+                name="password_compared"
+                type="password"
+                placeholder="Confirm password"
+                className={inputClass}
+                autoComplete="new-password"
+              />
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full mt-1 py-3 rounded-xl bg-sky-600 hover:bg-sky-700 disabled:bg-sky-300 text-white text-sm font-semibold transition-colors cursor-pointer shadow-sm shadow-sky-200"
+            >
+              {loading ? 'Please wait…' : isLogin ? 'Sign in' : 'Create account'}
+            </button>
+          </form>
+
+          <p className="text-center text-xs text-gray-400 mt-5">
+            {isLogin ? "Don't have an account?" : "Already have an account?"}
+            {' '}
+            <button
+              className="text-sky-600 font-semibold hover:text-sky-800 transition-colors cursor-pointer"
+              onClick={() => { setErrors(null); setAuthState(isLogin ? 'register' : 'login'); }}
+            >
+              {isLogin ? 'Sign up' : 'Sign in'}
+            </button>
+          </p>
         </div>
       </div>
     </div>
